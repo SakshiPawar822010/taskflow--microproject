@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskFlow – An Interactive To-Do List & Modern Productivity Workspace</title>
+  <meta name="description" content="TaskFlow is an advanced productivity platform where users can manage daily tasks, study schedules, project work, personal goals, and team activities.">
+  
+  <!-- Inter Font from Google Fonts with high performance preconnect -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Particle Confetti Canvas -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- Main Application Container -->
+  <div id="app-container">
+
+    <!-- ====================================================================
+         APP SIDEBAR (Hidden on landing/auth pages, visible on dashboard)
+         ==================================================================== -->
+    <aside class="app-sidebar">
+      <div class="sidebar-header">
+        <a href="#dashboard" class="brand-logo" data-view-target="dashboard">
+          <div class="brand-icon-box">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+          <span>TaskFlow</span>
+        </a>
+        <button id="theme-toggle-btn" class="btn-icon" title="Toggle Dark/Light Mode">
+          🌓
+        </button>
+      </div>
+
+      <div class="workspace-selector">
+        <div class="workspace-badge" id="btn-workspace-switch" title="Click to view workspace settings">
+          <span style="display: flex; align-items: center; gap: 0.5rem; overflow: hidden;">
+            <span>🏢</span>
+            <span class="user-workspace-display" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">WT Microproject Workspace</span>
+          </span>
+          <span style="font-size: 0.7rem; color: var(--text-subtle);">▼</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">Core Workspace</div>
+        <a href="#dashboard" class="nav-item active" data-view="dashboard" data-view-target="dashboard">
+          <div class="nav-item-left">
+            <span>📊</span>
+            <span>Dashboard</span>
+          </div>
+        </a>
+        <a href="#tasks" class="nav-item" data-view="tasks" data-view-target="tasks">
+          <div class="nav-item-left">
+            <span>📋</span>
+            <span>Task Board</span>
+          </div>
+          <span class="col-count" id="sidebar-task-count">7</span>
+        </a>
+        <a href="#checklists" class="nav-item" data-view="checklists" data-view-target="checklists">
+          <div class="nav-item-left">
+            <span>☑️</span>
+            <span>Checklists & Toggles</span>
+          </div>
+        </a>
+        <a href="#notes" class="nav-item" data-view="notes" data-view-target="notes">
+          <div class="nav-item-left">
+            <span>📝</span>
+            <span>Notes Workspace</span>
+          </div>
+        </a>
+        <a href="#files" class="nav-item" data-view="files" data-view-target="files">
+          <div class="nav-item-left">
+            <span>📁</span>
+            <span>File Manager</span>
+          </div>
+        </a>
+
+        <div class="nav-section-title">Collaboration & Schedule</div>
+        <a href="#team" class="nav-item" data-view="team" data-view-target="team">
+          <div class="nav-item-left">
+            <span>👥</span>
+            <span>Team Collaboration</span>
+          </div>
+        </a>
+        <a href="#calendar" class="nav-item" data-view="calendar" data-view-target="calendar">
+          <div class="nav-item-left">
+            <span>📅</span>
+            <span>Calendar</span>
+          </div>
+        </a>
+        <a href="#analytics" class="nav-item" data-view="analytics" data-view-target="analytics">
+          <div class="nav-item-left">
+            <span>📈</span>
+            <span>Analytics & Reports</span>
+          </div>
+        </a>
+
+        <div class="nav-section-title">Account & Site</div>
+        <a href="#profile" class="nav-item" data-view="profile" data-view-target="profile">
+          <div class="nav-item-left">
+            <span>⚙️</span>
+            <span>Profile & Settings</span>
+          </div>
+        </a>
+        <a href="#landing" class="nav-item" data-view="landing" data-view-target="landing">
+          <div class="nav-item-left">
+            <span>🌐</span>
+            <span>Landing Page</span>
+          </div>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-mini-profile" id="sidebar-user-profile" title="Switch User Persona">
+          <div class="avatar user-avatar-display">AC</div>
+          <div class="user-info">
+            <span class="user-name user-name-display">Alex Chen</span>
+            <span class="user-role-label user-role-display">Senior Product Manager</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ====================================================================
+         MAIN WRAPPER
+         ==================================================================== -->
+    <div class="main-wrapper">
+
+      <!-- Header (Top Nav) -->
+      <header class="app-header">
+        <div class="header-left">
+          <button id="mobile-menu-btn" class="btn-icon mobile-menu-btn" title="Open Menu">
+            ☰
+          </button>
+          <div class="search-bar" id="header-search-bar" title="Quick Search & Command Palette (Ctrl+K)">
+            <span>🔍</span>
+            <input type="text" placeholder="Search tasks, notes, files..." readonly>
+            <span class="shortcut-tag">Ctrl K</span>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <button class="btn btn-primary btn-sm" id="btn-header-add-task">
+            <span>➕</span>
+            <span>New Task</span>
+          </button>
+
+          <!-- Notifications Bell -->
+          <div style="position: relative;">
+            <button class="btn-icon" id="notifications-btn" title="Notifications">
+              🔔
+              <span class="badge badge-danger" id="notif-badge" style="position: absolute; top: 4px; right: 4px; font-size: 0.65rem; padding: 2px 5px; display: none;">2</span>
+            </button>
+
+            <!-- Notifications Dropdown -->
+            <div class="dropdown-menu" id="notifications-dropdown">
+              <div class="dropdown-header">
+                <span>Notifications</span>
+                <button class="btn btn-sm btn-ghost" id="mark-all-read-btn" style="font-size: 0.75rem; color: var(--primary);">Mark all read</button>
+              </div>
+              <div id="notifications-list-container" style="max-height: 280px; overflow-y: auto;">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <!-- User Avatar Pill -->
+          <div class="avatar user-avatar-display" style="cursor: pointer; width: 34px; height: 34px;" onclick="window.taskFlowApp.openModal('user-switcher-modal')" title="Switch Persona">
+            AC
+          </div>
+        </div>
+      </header>
+
+      <!-- Content Views Body Container -->
+      <main class="content-body">
+
+        <!-- ================================================================
+             1. LANDING PAGE VIEW
+             ================================================================ -->
+        <section id="view-landing" class="page-view active">
+          <!-- Hero Section -->
+          <div class="landing-hero">
+            <div class="hero-pill">
+              <span>🚀</span>
+              <span>Next-Gen Productivity Platform</span>
+            </div>
+            <h1 class="hero-title">
+              Organize Tasks. Manage Time. <br><span>Achieve Goals.</span>
+            </h1>
+            <p class="hero-subtitle">
+              TaskFlow brings your study schedules, project deadlines, Notion-style nested toggle checklists, rich notes, and team collaboration into one unified, elegant workspace.
+            </p>
+
+            <div class="hero-cta-group">
+              <a href="#dashboard" class="btn btn-primary" style="padding: 0.85rem 2rem; font-size: 1.05rem;" data-view-target="dashboard">
+                <span>⚡</span>
+                <span>Open Interactive Dashboard</span>
+              </a>
+              <a href="#login" class="btn btn-outline" style="padding: 0.85rem 1.75rem; font-size: 1.05rem;" data-view-target="login">
+                <span>Sign In / Demo Login</span>
+              </a>
+            </div>
+
+            <div class="hero-stats-row">
+              <div class="hero-stat-item">
+                <div class="hero-stat-number">12</div>
+                <div class="hero-stat-label">Full Workspace Modules</div>
+              </div>
+              <div class="hero-stat-item">
+                <div class="hero-stat-number">100%</div>
+                <div class="hero-stat-label">Offline Local Persistence</div>
+              </div>
+              <div class="hero-stat-item">
+                <div class="hero-stat-number">3+</div>
+                <div class="hero-stat-label">Target Personas Pre-Configured</div>
+              </div>
+              <div class="hero-stat-item">
+                <div class="hero-stat-number">0ms</div>
+                <div class="hero-stat-label">Zero-Latency State Updates</div>
+              </div>
+            </div>
+
+            <!-- Interactive Mockup Browser Frame -->
+            <div class="hero-preview-frame" style="margin-top: 3.5rem;">
+              <div class="preview-browser-bar">
+                <div class="browser-dot dot-red"></div>
+                <div class="browser-dot dot-yellow"></div>
+                <div class="browser-dot dot-green"></div>
+                <div class="browser-address">https://taskflow.io/workspace/dashboard</div>
+              </div>
+              <div style="padding: 2rem; background: var(--bg-app); text-align: left;">
+                <div style="display: flex; gap: 1.25rem; flex-wrap: wrap;">
+                  <div class="glass-card" style="flex: 1; min-width: 260px; padding: 1.25rem;">
+                    <span class="badge badge-primary">Kanban Engine</span>
+                    <h4 style="margin: 0.5rem 0;">Fluid Drag & Drop Tasks</h4>
+                    <p style="font-size: 0.85rem;">Organize tasks across To-Do, In Progress, In Review and Done with visual drop zones.</p>
+                  </div>
+                  <div class="glass-card" style="flex: 1; min-width: 260px; padding: 1.25rem;">
+                    <span class="badge badge-success">Notion Style</span>
+                    <h4 style="margin: 0.5rem 0;">Toggle Lists & Subtasks</h4>
+                    <p style="font-size: 0.85rem;">Hierarchical task trees with real-time percentage progress bars and smooth expand/collapse.</p>
+                  </div>
+                  <div class="glass-card" style="flex: 1; min-width: 260px; padding: 1.25rem;">
+                    <span class="badge badge-purple">High-DPI Analytics</span>
+                    <h4 style="margin: 0.5rem 0;">Visual Velocity Charts</h4>
+                    <p style="font-size: 0.85rem;">Interactive SVG donuts, weekly bar trends, and automated AI productivity insights.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Features Overview Section -->
+          <div class="landing-section">
+            <span class="section-tag">Powerful Capabilities</span>
+            <h2 class="section-heading">Everything You Need to Supercharge Productivity</h2>
+            <p class="section-desc">Engineered for individuals and high-performance teams who demand speed, aesthetics, and organization.</p>
+
+            <div class="features-grid">
+              <div class="glass-card feature-box">
+                <div class="feature-icon-wrapper" style="background: var(--primary-light); color: var(--primary);">📋</div>
+                <h3 class="feature-title">Interactive Task Board</h3>
+                <p class="feature-text">Switch seamlessly between Kanban Board, List View, and Table View with priority badges, deadlines, and fuzzy search.</p>
+              </div>
+
+              <div class="glass-card feature-box">
+                <div class="feature-icon-wrapper" style="background: var(--success-light); color: var(--success);">☑️</div>
+                <h3 class="feature-title">Notion-Style Toggle Lists</h3>
+                <p class="feature-text">Build multi-level nested checklists with collapsible sections, indent/outdent controls, and automatic progress calculation.</p>
+              </div>
+
+              <div class="glass-card feature-box">
+                <div class="feature-icon-wrapper" style="background: var(--purple-light); color: var(--purple);">📝</div>
+                <h3 class="feature-title">Rich Notes Workspace</h3>
+                <p class="feature-text">Distraction-free personal & study memos with live WYSIWYG formatting toolbar, tags, search, and pin-to-top controls.</p>
+              </div>
+
+              <div class="glass-card feature-box">
+                <div class="feature-icon-wrapper" style="background: var(--warning-light); color: var(--warning);">📁</div>
+                <h3 class="feature-title">Simulated File Manager</h3>
+                <p class="feature-text">Store and preview PDFs, images, and documents with realistic file viewer modal, download simulation, and storage meters.</p>
+              </div>
+
+              <div class="glass-card feature-box">
+                <div class="feature-icon-wrapper" style="background: var(--primary-light); color: var(--primary);">👥</div>
+                <h3 class="feature-title">Team Collaboration</h3>
+                <p class="feature-text">Assign tasks, monitor real-time member workload meters, switch shared workspaces, and collaborate via live discussion streams.</p>
+              </div>
+
+              <div class="glass-card feature-box">
+                <div class="feature-icon-wrapper" style="background: var(--danger-light); color: var(--danger);">📅</div>
+                <h3 class="feature-title">Deadline Calendar</h3>
+                <p class="feature-text">Interactive monthly and weekly schedule views mapping task milestones directly to date cells with instant day inspector popovers.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Target Users Section -->
+          <div class="landing-section" style="background: var(--bg-hover); border-radius: var(--radius-xl); padding: 4rem 2rem;">
+            <span class="section-tag">Tailored Experiences</span>
+            <h2 class="section-heading">Designed for Every Workflow</h2>
+            <p class="section-desc">TaskFlow adapts seamlessly whether you are balancing college semesters, leading product sprints, or managing daily habits.</p>
+
+            <div class="personas-grid">
+              <div class="glass-card persona-card">
+                <div class="persona-avatar-box">🎓</div>
+                <h4 style="font-size: 1.15rem;">Students</h4>
+                <p style="font-size: 0.85rem;">Track academic assignments, exam preparation checklists, lecture notes, and syllabus progress in one spot.</p>
+                <button class="btn btn-sm btn-outline persona-switch-btn" data-user-id="user_2" onclick="window.taskFlowApp.switchUser('user_2'); window.location.hash='dashboard';">Demo as Student</button>
+              </div>
+
+              <div class="glass-card persona-card">
+                <div class="persona-avatar-box">💼</div>
+                <h4 style="font-size: 1.15rem;">Professionals</h4>
+                <p style="font-size: 0.85rem;">Manage sprint deliverables, project requirements documents, high-priority deadlines, and velocity metrics.</p>
+                <button class="btn btn-sm btn-outline persona-switch-btn" data-user-id="user_1" onclick="window.taskFlowApp.switchUser('user_1'); window.location.hash='dashboard';">Demo as Alex</button>
+              </div>
+
+              <div class="glass-card persona-card">
+                <div class="persona-avatar-box">🚀</div>
+                <h4 style="font-size: 1.15rem;">Team Leads</h4>
+                <p style="font-size: 0.85rem;">Balance team workload distributions, delegate action items, and maintain accountability across squads.</p>
+                <button class="btn btn-sm btn-outline persona-switch-btn" data-user-id="user_3" onclick="window.taskFlowApp.switchUser('user_3'); window.location.hash='dashboard';">Demo as Sarah</button>
+              </div>
+
+              <div class="glass-card persona-card">
+                <div class="persona-avatar-box">✨</div>
+                <h4 style="font-size: 1.15rem;">Daily Users</h4>
+                <p style="font-size: 0.85rem;">Establish morning routines, build workout splits, manage personal budgets, and achieve life goals.</p>
+                <a href="#dashboard" class="btn btn-sm btn-primary" data-view-target="dashboard">Explore Now</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <footer class="landing-footer">
+            <div class="footer-inner">
+              <div style="max-width: 320px;">
+                <div class="brand-logo" style="margin-bottom: 1rem;">
+                  <div class="brand-icon-box">TF</div>
+                  <span>TaskFlow</span>
+                </div>
+                <p style="font-size: 0.85rem; margin-bottom: 1rem;">An advanced productivity workspace crafted for modern Web Technology evaluation and real-world high velocity workflows.</p>
+                <span class="badge badge-success">WT Microproject # Verified</span>
+              </div>
+
+              <div class="footer-col">
+                <h5>Product</h5>
+                <ul class="footer-links">
+                  <li><a href="#dashboard" data-view-target="dashboard">Dashboard</a></li>
+                  <li><a href="#tasks" data-view-target="tasks">Task Board</a></li>
+                  <li><a href="#checklists" data-view-target="checklists">Toggle Lists</a></li>
+                  <li><a href="#notes" data-view-target="notes">Notes Workspace</a></li>
+                  <li><a href="#files" data-view-target="files">File Manager</a></li>
+                </ul>
+              </div>
+
+              <div class="footer-col">
+                <h5>Features</h5>
+                <ul class="footer-links">
+                  <li><a href="#team" data-view-target="team">Team Collaboration</a></li>
+                  <li><a href="#calendar" data-view-target="calendar">Interactive Calendar</a></li>
+                  <li><a href="#analytics" data-view-target="analytics">Analytics & Reports</a></li>
+                  <li><a href="#profile" data-view-target="profile">Profile & Settings</a></li>
+                </ul>
+              </div>
+
+              <div class="footer-col">
+                <h5>Technology</h5>
+                <ul class="footer-links">
+                  <li><a href="#" onclick="alert('Pure HTML5, Modern CSS3 & Vanilla JavaScript ES6+'); return false;">HTML5 / CSS3 / ES6+</a></li>
+                  <li><a href="#" onclick="alert('Zero build tools required. Works instantly in any browser via double click!'); return false;">Zero-Dependency Engine</a></li>
+                  <li><a href="#" onclick="alert('All data is synchronized and preserved in browser localStorage.'); return false;">LocalStorage Persistence</a></li>
+                  <li><a href="#" onclick="alert('Accessible WCAG AA compliant with keyboard shortcuts.'); return false;">Command Palette (Ctrl+K)</a></li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="footer-bottom">
+              <span>© 2026 TaskFlow. All rights reserved. WT Microproject Frontend.</span>
+              <span>"Organize Tasks. Manage Time. Achieve Goals."</span>
+            </div>
+          </footer>
+        </section>
+
+        <!-- ================================================================
+             2. LOGIN PAGE VIEW
+             ================================================================ -->
+        <section id="view-login" class="page-view">
+          <div class="auth-wrapper glass-card">
+            <div class="auth-header">
+              <div class="brand-icon-box" style="margin: 0 auto 1rem; width: 48px; height: 48px; font-size: 1.25rem;">TF</div>
+              <h2 class="auth-title">Welcome back</h2>
+              <p style="font-size: 0.9rem;">Sign in to your TaskFlow workspace</p>
+            </div>
+
+            <form class="auth-form" id="login-form">
+              <div class="form-group">
+                <label class="form-label" for="login-email">Email Address</label>
+                <div class="input-with-icon">
+                  <span class="input-icon-left">✉️</span>
+                  <input type="email" id="login-email" placeholder="name@workplace.io" value="alex.chen@workplace.io" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <div class="form-label">
+                  <span>Password</span>
+                  <a href="#" id="link-forgot-password" style="font-size: 0.775rem;">Forgot password?</a>
+                </div>
+                <div class="input-with-icon">
+                  <span class="input-icon-left">🔒</span>
+                  <input type="password" id="login-password" placeholder="••••••••" value="password123" required>
+                  <span class="password-toggle-btn" title="Toggle visibility">👁️</span>
+                </div>
+              </div>
+
+              <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                  <input type="checkbox" id="login-remember" checked style="width: auto;">
+                  <span>Remember me for 30 days</span>
+                </label>
+              </div>
+
+              <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
+                Sign In to Workspace
+              </button>
+            </form>
+
+            <div class="demo-logins-box">
+              <div class="demo-logins-title">1-Click Quick Demo Sign In</div>
+              <div class="demo-buttons-grid">
+                <button type="button" class="btn btn-outline btn-sm btn-demo-login" data-user-id="user_2" title="CS & Web Tech Student">🎓 Student</button>
+                <button type="button" class="btn btn-outline btn-sm btn-demo-login" data-user-id="user_1" title="Senior Product Manager">💼 Alex</button>
+                <button type="button" class="btn btn-outline btn-sm btn-demo-login" data-user-id="user_3" title="Engineering Team Lead">🚀 Sarah</button>
+              </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 1.75rem; font-size: 0.875rem;">
+              <span style="color: var(--text-muted);">Don't have an account? </span>
+              <a href="#register" data-view-target="register" style="font-weight: 700;">Create an account</a>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================
+             3. REGISTRATION PAGE VIEW
+             ================================================================ -->
+        <section id="view-register" class="page-view">
+          <div class="auth-wrapper glass-card">
+            <div class="auth-header">
+              <div class="brand-icon-box" style="margin: 0 auto 1rem; width: 48px; height: 48px; font-size: 1.25rem;">TF</div>
+              <h2 class="auth-title">Create your account</h2>
+              <p style="font-size: 0.9rem;">Join TaskFlow and supercharge your productivity</p>
+            </div>
+
+            <form class="auth-form" id="register-form">
+              <div class="form-group">
+                <label class="form-label" for="reg-fullname">Full Name</label>
+                <div class="input-with-icon">
+                  <span class="input-icon-left">👤</span>
+                  <input type="text" id="reg-fullname" placeholder="John Doe" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="reg-email">Work or Student Email</label>
+                <div class="input-with-icon">
+                  <span class="input-icon-left">✉️</span>
+                  <input type="email" id="reg-email" placeholder="john@example.com" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="reg-role-select">Primary Role</label>
+                <select id="reg-role-select">
+                  <option value="Student">Student (Academic, Study schedules & Notes)</option>
+                  <option value="Professional" selected>Professional (Sprint management & Projects)</option>
+                  <option value="Team Lead">Team Lead (Workload allocation & Delegating)</option>
+                  <option value="Daily User">Daily Habit & Goal Tracker</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <div class="form-label">
+                  <span>Password</span>
+                  <span id="password-strength-label" style="font-size: 0.75rem; color: var(--text-muted);">Enter password</span>
+                </div>
+                <div class="input-with-icon">
+                  <span class="input-icon-left">🔒</span>
+                  <input type="password" id="reg-password" placeholder="At least 6 characters" required>
+                  <span class="password-toggle-btn" title="Toggle visibility">👁️</span>
+                </div>
+                <div class="password-strength-bar">
+                  <div class="password-strength-fill" id="password-strength-fill"></div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="reg-confirm-password">Confirm Password</label>
+                <div class="input-with-icon">
+                  <span class="input-icon-left">🔒</span>
+                  <input type="password" id="reg-confirm-password" placeholder="Re-type password" required>
+                </div>
+              </div>
+
+              <div style="font-size: 0.8rem; color: var(--text-muted);">
+                <label style="display: flex; align-items: flex-start; gap: 0.5rem; cursor: pointer;">
+                  <input type="checkbox" required style="width: auto; margin-top: 3px;">
+                  <span>I agree to the Terms of Service, Privacy Policy and offline local data storage.</span>
+                </label>
+              </div>
+
+              <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
+                Create Free Account
+              </button>
+            </form>
+
+            <div style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem;">
+              <span style="color: var(--text-muted);">Already registered? </span>
+              <a href="#login" data-view-target="login" style="font-weight: 700;">Sign in here</a>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================
+             4. DASHBOARD VIEW
+             ================================================================ -->
+        <section id="view-dashboard" class="page-view">
+          <!-- Welcome Banner -->
+          <div class="welcome-banner">
+            <div class="welcome-text">
+              <h2 id="dashboard-greeting">Good afternoon, Alex!</h2>
+              <p class="welcome-quote">"Focus on being productive instead of busy." — Tim Ferriss</p>
+              <div style="margin-top: 0.75rem; display: flex; gap: 0.75rem; align-items: center;">
+                <span class="badge badge-primary">Workspace: <span class="user-workspace-display">Product HQ</span></span>
+                <span class="badge badge-success">Streak: 7 Days 🔥</span>
+              </div>
+            </div>
+            <div style="display: flex; gap: 0.75rem;">
+              <button class="btn btn-primary" onclick="window.tasksModule.openCreateModal()">
+                <span>➕</span>
+                <span>Create Task</span>
+              </button>
+              <button class="btn btn-outline" onclick="window.taskFlowApp.navigateTo('analytics')">
+                <span>View Analytics</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Metric Stat Cards -->
+          <div class="stats-grid">
+            <div class="glass-card stat-card">
+              <div class="stat-info">
+                <span class="stat-title">Total Tasks</span>
+                <span class="stat-value" id="stat-total-tasks">7</span>
+                <span class="stat-trend trend-up">↑ 12% vs last week</span>
+              </div>
+              <div class="stat-icon" style="background: var(--primary-light); color: var(--primary);">📋</div>
+            </div>
+
+            <div class="glass-card stat-card">
+              <div class="stat-info">
+                <span class="stat-title">Completed</span>
+                <span class="stat-value" id="stat-completed-tasks">2</span>
+                <span class="stat-trend trend-up">✓ On track</span>
+              </div>
+              <div class="stat-icon" style="background: var(--success-light); color: var(--success);">✅</div>
+            </div>
+
+            <div class="glass-card stat-card">
+              <div class="stat-info">
+                <span class="stat-title">Pending</span>
+                <span class="stat-value" id="stat-pending-tasks">5</span>
+                <span class="stat-trend">In active progress</span>
+              </div>
+              <div class="stat-icon" style="background: var(--warning-light); color: var(--warning);">⏳</div>
+            </div>
+
+            <div class="glass-card stat-card">
+              <div class="stat-info">
+                <span class="stat-title">Productivity Score</span>
+                <span class="stat-value" id="stat-productivity-score">75%</span>
+                <span class="stat-trend trend-up">🔥 High momentum</span>
+              </div>
+              <div class="stat-icon" style="background: var(--purple-light); color: var(--purple);">🎯</div>
+            </div>
+          </div>
+
+          <!-- Dashboard 2-Column Grid -->
+          <div class="dashboard-grid">
+            <!-- Left Column: Upcoming Deadlines & Weekly Sparkline -->
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+              <div class="glass-card" style="padding: 1.5rem;">
+                <div class="dashboard-card-header">
+                  <div>
+                    <h3 class="card-heading">Upcoming Deadlines</h3>
+                    <p style="font-size: 0.8rem;">Priority milestones requiring attention</p>
+                  </div>
+                  <a href="#calendar" data-view-target="calendar" class="btn btn-sm btn-ghost">Full Calendar →</a>
+                </div>
+                <div class="deadline-items-list" id="dashboard-upcoming-deadlines">
+                  <!-- Populated dynamically -->
+                </div>
+              </div>
+
+              <!-- Productivity Activity Sparkline -->
+              <div class="glass-card" style="padding: 1.5rem;">
+                <div class="dashboard-card-header">
+                  <div>
+                    <h3 class="card-heading">7-Day Productivity Velocity</h3>
+                    <p style="font-size: 0.8rem;">Tasks completed throughout this week</p>
+                  </div>
+                  <span class="badge badge-success">38 hrs focused</span>
+                </div>
+                <div style="display: flex; align-items: flex-end; justify-content: space-between; height: 160px; padding-top: 1rem;" id="dashboard-sparkline-bars">
+                  <!-- Rendered dynamically -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column: Quick Actions & Team Activity -->
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+              <!-- Quick Actions -->
+              <div class="glass-card" style="padding: 1.5rem;">
+                <h3 class="card-heading" style="margin-bottom: 1rem;">Quick Actions</h3>
+                <div class="quick-actions-grid">
+                  <div class="quick-action-btn" onclick="window.tasksModule.openCreateModal()">
+                    <span style="font-size: 1.4rem;">➕</span>
+                    <span>New Task</span>
+                  </div>
+                  <div class="quick-action-btn" onclick="window.notesModule.createNewNote()">
+                    <span style="font-size: 1.4rem;">📝</span>
+                    <span>Quick Note</span>
+                  </div>
+                  <div class="quick-action-btn" onclick="window.taskFlowApp.navigateTo('files')">
+                    <span style="font-size: 1.4rem;">📁</span>
+                    <span>Upload File</span>
+                  </div>
+                  <div class="quick-action-btn" onclick="window.checklistsModule.openCreateGroupPrompt()">
+                    <span style="font-size: 1.4rem;">☑️</span>
+                    <span>New Checklist</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Activity Stream -->
+              <div class="glass-card" style="padding: 1.5rem; flex: 1;">
+                <div class="dashboard-card-header">
+                  <h3 class="card-heading">Recent Team Activity</h3>
+                  <a href="#team" data-view-target="team" class="btn btn-sm btn-ghost">View All →</a>
+                </div>
+                <div class="activity-feed" id="dashboard-activity-stream">
+                  <!-- Rendered dynamically -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================
+             5. TASK MANAGEMENT PAGE VIEW
+             ================================================================ -->
+        <section id="view-tasks" class="page-view">
+          <div class="page-header-row">
+            <div>
+              <h1 class="page-title">Task Management</h1>
+              <p class="page-subtitle">Track, filter, and drag & drop tasks across your agile productivity workflow.</p>
+            </div>
+            <button class="btn btn-primary" id="btn-new-task">
+              <span>➕</span>
+              <span>Create Task</span>
+            </button>
+          </div>
+
+          <!-- Toolbar -->
+          <div class="task-toolbar">
+            <div class="view-switcher">
+              <button class="view-btn active" data-view-mode="kanban">
+                <span>🗂️</span>
+                <span>Kanban Board</span>
+              </button>
+              <button class="view-btn" data-view-mode="list">
+                <span>📑</span>
+                <span>List View</span>
+              </button>
+              <button class="view-btn" data-view-mode="table">
+                <span>📊</span>
+                <span>Table View</span>
+              </button>
+            </div>
+
+            <div class="filter-group">
+              <div style="position: relative;">
+                <input type="text" id="task-search-input" placeholder="Filter tasks by name..." style="padding-left: 2rem; width: 200px;">
+                <span style="position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%); font-size: 0.85rem; color: var(--text-subtle);">🔍</span>
+              </div>
+
+              <select id="task-filter-category" class="filter-select">
+                <option value="all">All Categories</option>
+                <option value="Study">Study</option>
+                <option value="Work">Work</option>
+                <option value="Personal">Personal</option>
+                <option value="Team">Team</option>
+              </select>
+
+              <select id="task-filter-priority" class="filter-select">
+                <option value="all">All Priorities</option>
+                <option value="urgent">Urgent</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Kanban Board View -->
+          <div id="tasks-kanban-view" class="kanban-board">
+            <!-- Column 1: To Do -->
+            <div class="kanban-column col-todo">
+              <div class="column-header">
+                <div class="column-title-group">
+                  <span style="font-weight: 700; font-size: 0.95rem;">To-Do</span>
+                  <span class="col-count" id="count-todo">0</span>
+                </div>
+                <button class="btn-icon btn-sm" onclick="window.tasksModule.openCreateModal()" title="Add to To-Do">➕</button>
+              </div>
+              <div class="kanban-task-list" id="col-tasks-todo" data-status="todo"></div>
+            </div>
+
+            <!-- Column 2: In Progress -->
+            <div class="kanban-column col-inprogress">
+              <div class="column-header">
+                <div class="column-title-group">
+                  <span style="font-weight: 700; font-size: 0.95rem; color: var(--primary);">In Progress</span>
+                  <span class="col-count" id="count-inprogress">0</span>
+                </div>
+              </div>
+              <div class="kanban-task-list" id="col-tasks-inprogress" data-status="inprogress"></div>
+            </div>
+
+            <!-- Column 3: In Review -->
+            <div class="kanban-column col-inreview">
+              <div class="column-header">
+                <div class="column-title-group">
+                  <span style="font-weight: 700; font-size: 0.95rem; color: var(--warning);">In Review</span>
+                  <span class="col-count" id="count-inreview">0</span>
+                </div>
+              </div>
+              <div class="kanban-task-list" id="col-tasks-inreview" data-status="inreview"></div>
+            </div>
+
+            <!-- Column 4: Completed -->
+            <div class="kanban-column col-done">
+              <div class="column-header">
+                <div class="column-title-group">
+                  <span style="font-weight: 700; font-size: 0.95rem; color: var(--success);">Completed</span>
+                  <span class="col-count" id="count-done">0</span>
+                </div>
+              </div>
+              <div class="kanban-task-list" id="col-tasks-done" data-status="done"></div>
+            </div>
+          </div>
+
+          <!-- List View (Hidden by default) -->
+          <div id="tasks-list-view" style="display: none;"></div>
+
+          <!-- Table View (Hidden by default) -->
+          <div id="tasks-table-view" style="display: none;"></div>
+        </section>
+
+        <!-- ================================================================
+             6. CHECKLIST & TOGGLE LIST PAGE VIEW
+             ================================================================ -->
+        <section id="view-checklists" class="page-view">
+          <div class="page-header-row">
+            <div>
+              <h1 class="page-title">Checklists & Toggle Lists</h1>
+              <p class="page-subtitle">Notion-inspired collapsible hierarchy with nested subtasks and real-time progress tracking.</p>
+            </div>
+            <button class="btn btn-primary" id="btn-new-toggle-group">
+              <span>➕</span>
+              <span>New Toggle Section</span>
+            </button>
+          </div>
+
+          <div class="checklist-builder" id="checklists-container">
+            <!-- Rendered dynamically -->
+          </div>
+        </section>
+
+        <!-- ================================================================
+             7. NOTES WORKSPACE VIEW
+             ================================================================ -->
+        <section id="view-notes" class="page-view">
+          <div class="page-header-row">
+            <div>
+              <h1 class="page-title">Notes Workspace</h1>
+              <p class="page-subtitle">Distraction-free personal & study memos with rich text formatting tools and tags.</p>
+            </div>
+            <button class="btn btn-primary" id="btn-new-note">
+              <span>➕</span>
+              <span>Create Note</span>
+            </button>
+          </div>
+
+          <div class="notes-container">
+            <!-- Notes Sidebar List -->
+            <div class="notes-sidebar-list">
+              <div class="notes-list-header">
+                <input type="text" id="notes-search-input" placeholder="Search notes...">
+                <div style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
+                  <button class="btn btn-sm btn-ghost note-filter-tab active" data-category="all">All</button>
+                  <button class="btn btn-sm btn-ghost note-filter-tab" data-category="study">Study</button>
+                  <button class="btn btn-sm btn-ghost note-filter-tab" data-category="work">Work</button>
+                  <button class="btn btn-sm btn-ghost note-filter-tab" data-category="personal">Personal</button>
+                </div>
+              </div>
+              <div class="notes-scroll-area" id="notes-sidebar-items">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+
+            <!-- Notes Editor Panel -->
+            <div class="note-editor-panel">
+              <!-- Formatting Toolbar -->
+              <div class="editor-toolbar">
+                <button class="editor-tool-btn" data-command="bold" title="Bold"><b>B</b></button>
+                <button class="editor-tool-btn" data-command="italic" title="Italic"><i>I</i></button>
+                <span style="color: var(--border-medium);">|</span>
+                <button class="editor-tool-btn" data-command="h1" title="Heading 1">H1</button>
+                <button class="editor-tool-btn" data-command="h2" title="Heading 2">H2</button>
+                <span style="color: var(--border-medium);">|</span>
+                <button class="editor-tool-btn" data-command="list-bullet" title="Bullet List">• List</button>
+                <button class="editor-tool-btn" data-command="list-number" title="Numbered List">1. List</button>
+                <button class="editor-tool-btn" data-command="quote" title="Quote Block">“ Quote</button>
+                <button class="editor-tool-btn" data-command="code" title="Code Block">&lt;/&gt;</button>
+                <div style="margin-left: auto; display: flex; align-items: center; gap: 0.5rem;">
+                  <span class="badge badge-purple" id="editor-category-badge">Study</span>
+                  <button class="btn btn-sm btn-outline" id="btn-pin-note">📌 Pin</button>
+                  <button class="btn btn-sm btn-ghost" id="btn-delete-note" style="color: var(--danger);">🗑️</button>
+                </div>
+              </div>
+
+              <!-- Content Area -->
+              <div class="editor-content-area">
+                <input type="text" id="editor-note-title" class="editor-note-title" placeholder="Note Title...">
+                <textarea id="editor-note-textarea" class="editor-note-textarea" placeholder="Start typing notes or formatting with the toolbar above..."></textarea>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================
+             8. FILE MANAGER VIEW
+             ================================================================ -->
+        <section id="view-files" class="page-view">
+          <div class="page-header-row">
+            <div>
+              <h1 class="page-title">File Manager & Document Hub</h1>
+              <p class="page-subtitle">Upload, preview, and download PDFs, project specs, mockups, and spreadsheets.</p>
+            </div>
+            <button class="btn btn-primary" onclick="document.getElementById('file-upload-input').click()">
+              <span>⬆️</span>
+              <span>Upload Document</span>
+            </button>
+          </div>
+
+          <!-- Hidden native file input -->
+          <input type="file" id="file-upload-input" style="display: none;">
+
+          <!-- Storage Meter -->
+          <div class="file-storage-meter">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <div style="font-size: 2rem;">☁️</div>
+              <div>
+                <div style="font-weight: 700; font-size: 1rem;">Cloud Storage Allocation</div>
+                <div style="font-size: 0.825rem; color: var(--text-muted);">1.4 GB of 5.0 GB used (28%)</div>
+              </div>
+            </div>
+            <div style="width: 240px;">
+              <div class="progress-bar-container" style="height: 8px;">
+                <div class="progress-bar-fill" style="width: 28%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Drag and Drop Zone -->
+          <div class="file-dropzone" id="file-dropzone">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📂</div>
+            <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.35rem;">Drag & drop files here to upload</h3>
+            <p style="font-size: 0.85rem;">Supports PDFs, Documents (.docx, .txt), Images (.png, .jpg), and Code files</p>
+          </div>
+
+          <!-- Filter Tabs -->
+          <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+            <button class="btn btn-sm btn-ghost file-filter-tab active" data-type="all">All Files</button>
+            <button class="btn btn-sm btn-ghost file-filter-tab" data-type="pdf">PDFs</button>
+            <button class="btn btn-sm btn-ghost file-filter-tab" data-type="doc">Documents</button>
+            <button class="btn btn-sm btn-ghost file-filter-tab" data-type="img">Images</button>
+            <button class="btn btn-sm btn-ghost file-filter-tab" data-type="code">Code / Data</button>
+          </div>
+
+          <!-- Files Grid -->
+          <div class="files-grid" id="files-grid-container">
+            <!-- Rendered dynamically -->
+          </div>
+        </section>
+
+        <!-- ================================================================
+             9. TEAM COLLABORATION VIEW
+             ================================================================ -->
+        <section id="view-team" class="page-view">
+          <div class="page-header-row">
+            <div>
+              <h1 class="page-title">Team Collaboration</h1>
+              <p class="page-subtitle">Delegate tasks, monitor member workload capacities, and communicate in real-time.</p>
+            </div>
+            <div style="display: flex; gap: 0.75rem;">
+              <select id="team-workspace-select" class="filter-select" style="min-width: 200px;">
+                <option value="WT Microproject Team">WT Microproject Team</option>
+                <option value="Product HQ">Product HQ</option>
+                <option value="Engineering Alpha Squad">Engineering Alpha Squad</option>
+              </select>
+              <button class="btn btn-primary" id="btn-invite-member">
+                <span>➕</span>
+                <span>Invite Member</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="team-grid">
+            <!-- Left: Member Directory & Shared Tasks -->
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+              <div class="glass-card" style="padding: 1.5rem;">
+                <h3 class="card-heading" style="margin-bottom: 1rem;">Team Members & Workload</h3>
+                <div class="team-members-list" id="team-members-container">
+                  <!-- Rendered dynamically -->
+                </div>
+              </div>
+
+              <div class="glass-card" style="padding: 1.5rem;">
+                <h3 class="card-heading" style="margin-bottom: 1rem;">Shared Workspace Tasks</h3>
+                <div id="team-shared-tasks-container">
+                  <!-- Rendered dynamically -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Team Discussion Feed -->
+            <div>
+              <div class="comments-container">
+                <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-light); font-weight: 700; font-size: 0.95rem;">
+                  💬 Workspace Activity & Discussion
+                </div>
+                <div class="comments-stream" id="team-comments-stream">
+                  <!-- Rendered dynamically -->
+                </div>
+                <form class="comment-input-bar" id="team-comment-form">
+                  <input type="text" id="team-comment-input" placeholder="Write an update or reply..." required>
+                  <button type="submit" class="btn btn-primary btn-sm">Send</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================
+             10. CALENDAR PAGE VIEW
+             ================================================================ -->
+        <section id="view-calendar" class="page-view">
+          <div class="page-header-row">
+            <div>
+              <h1 class="page-title">Interactive Calendar</h1>
+              <p class="page-subtitle">Track project deadlines, exam dates, and sprints on monthly and weekly layouts.</p>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+              <button class="btn btn-sm btn-outline cal-view-btn active" data-mode="month">Month View</button>
+              <button class="btn btn-sm btn-outline cal-view-btn" data-mode="week">Week View</button>
+            </div>
+          </div>
+
+          <div class="calendar-wrapper">
+            <div class="calendar-header-bar">
+              <h2 id="cal-month-title" style="font-size: 1.35rem; font-weight: 800;">September 2026</h2>
+              <div style="display: flex; gap: 0.5rem;">
+                <button class="btn btn-sm btn-outline" id="cal-btn-prev">← Prev</button>
+                <button class="btn btn-sm btn-outline" id="cal-btn-today">Today</button>
+                <button class="btn btn-sm btn-outline" id="cal-btn-next">Next →</button>
+              </div>
+            </div>
+
+            <!-- Day Headers -->
+            <div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: 700; font-size: 0.8rem; color: var(--text-subtle); margin-bottom: 0.5rem;">
+              <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
+            </div>
+
+            <!-- Days Grid -->
+            <div class="calendar-grid" id="calendar-days-grid">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================
+             11. ANALYTICS PAGE VIEW
+             ================================================================ -->
+        <section id="view-analytics" class="page-view">
+          <div class="page-header-row">
+            <div>
+              <h1 class="page-title">Productivity Analytics & Reports</h1>
+              <p class="page-subtitle">Detailed insights into your task completion rates, velocity, and focus metrics.</p>
+            </div>
+            <button class="btn btn-outline" id="btn-print-report">
+              <span>🖨️</span>
+              <span>Print / Export Report</span>
+            </button>
+          </div>
+
+          <!-- Top Metric Cards -->
+          <div class="stats-grid" style="margin-bottom: 2rem;">
+            <div class="glass-card stat-card">
+              <div class="stat-info">
+                <span class="stat-title">Velocity Rate</span>
+                <span class="stat-value" id="analytics-stat-rate">75%</span>
+                <span class="stat-trend trend-up">↑ 18% improvement</span>
+              </div>
+              <div class="stat-icon" style="background: var(--success-light); color: var(--success);">📈</div>
+            </div>
+
+            <div class="glass-card stat-card">
+              <div class="stat-info">
+                <span class="stat-title">Total Handled</span>
+                <span class="stat-value" id="analytics-stat-total">7</span>
+                <span class="stat-trend">Sprint 14 Backlog</span>
+              </div>
+              <div class="stat-icon" style="background: var(--primary-light); color: var(--primary);">📋</div>
+            </div>
+
+            <div class="glass-card stat-card">
+              <div class="stat-info">
+                <span class="stat-title">Current Streak</span>
+                <span class="stat-value" id="analytics-stat-streak">7 Days 🔥</span>
+                <span class="stat-trend trend-up">Consistent momentum</span>
+              </div>
+              <div class="stat-icon" style="background: var(--warning-light); color: var(--warning);">⚡</div>
+            </div>
+
+            <div class="glass-card stat-card">
+              <div class="stat-info">
+                <span class="stat-title">Focus Hours</span>
+                <span class="stat-value" id="analytics-stat-hours">38.5 hrs</span>
+                <span class="stat-trend">5.5 hrs / day avg</span>
+              </div>
+              <div class="stat-icon" style="background: var(--purple-light); color: var(--purple);">⏱️</div>
+            </div>
+          </div>
+
+          <!-- Charts 2-Column Grid -->
+          <div class="analytics-grid">
+            <div class="chart-card">
+              <div class="chart-header">
+                <div>
+                  <h3 class="card-heading">Weekly Task Velocity</h3>
+                  <p style="font-size: 0.8rem;">Completed vs newly created tasks</p>
+                </div>
+                <span class="badge badge-primary">Mon – Sun</span>
+              </div>
+              <div id="analytics-weekly-chart" style="flex: 1;"></div>
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-header">
+                <div>
+                  <h3 class="card-heading">Category Distribution</h3>
+                  <p style="font-size: 0.8rem;">Allocation across Study, Work, Personal and Team</p>
+                </div>
+                <span class="badge badge-purple">4 Categories</span>
+              </div>
+              <div id="analytics-donut-chart" style="flex: 1;"></div>
+            </div>
+          </div>
+
+          <!-- Priority Distribution Bar & AI Insights -->
+          <div class="dashboard-grid">
+            <div class="glass-card" style="padding: 1.75rem;">
+              <h3 class="card-heading" style="margin-bottom: 1rem;">Priority Distribution Gauge</h3>
+              <div id="analytics-priority-bars"></div>
+            </div>
+
+            <div class="glass-card" style="padding: 1.75rem;">
+              <h3 class="card-heading" style="margin-bottom: 1rem;">Automated Productivity Insights</h3>
+              <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+                <div class="insight-card">
+                  <span>💡</span>
+                  <div>
+                    <strong style="font-size: 0.85rem;">Peak Focus Hours</strong>
+                    <p style="font-size: 0.8rem; margin-top: 2px;">You complete 82% of your high priority tasks before 2:00 PM. Schedule deep work in the morning.</p>
+                  </div>
+                </div>
+                <div class="insight-card" style="border-left-color: var(--success);">
+                  <span>🎯</span>
+                  <div>
+                    <strong style="font-size: 0.85rem;">Study Velocity Leader</strong>
+                    <p style="font-size: 0.8rem; margin-top: 2px;">Study category has the highest completion rate (85%) with zero overdue milestones.</p>
+                  </div>
+                </div>
+                <div class="insight-card" style="border-left-color: var(--warning);">
+                  <span>⚡</span>
+                  <div>
+                    <strong style="font-size: 0.85rem;">Subtask Recommendation</strong>
+                    <p style="font-size: 0.8rem; margin-top: 2px;">Breaking large tasks into 2-4 subtasks increases completion likelihood by 34%.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================
+             12. PROFILE & SETTINGS PAGE VIEW
+             ================================================================ -->
+        <section id="view-profile" class="page-view">
+          <div class="page-header-row">
+            <div>
+              <h1 class="page-title">Profile & Workspace Settings</h1>
+              <p class="page-subtitle">Manage personal information, theme preferences, and data synchronization.</p>
+            </div>
+            <button class="btn btn-primary" id="btn-save-profile">Save Changes</button>
+          </div>
+
+          <div class="profile-layout">
+            <!-- Left: Avatar Card -->
+            <div class="glass-card profile-card-left">
+              <div class="profile-avatar-large user-avatar-display">AC</div>
+              <div>
+                <h3 class="user-name-display" style="font-size: 1.25rem;">Alex Chen</h3>
+                <p class="user-role-display" style="font-size: 0.85rem;">Senior Product Manager</p>
+              </div>
+              <button class="btn btn-sm btn-outline" onclick="window.taskFlowApp.openModal('user-switcher-modal')" style="width: 100%;">
+                Switch Persona Account
+              </button>
+
+              <div style="width: 100%; border-top: 1px solid var(--border-light); padding-top: 1.25rem; text-align: left; font-size: 0.85rem;">
+                <div style="color: var(--text-subtle); margin-bottom: 2px;">Workspace</div>
+                <div style="font-weight: 600;" class="user-workspace-display">Product HQ</div>
+                <div style="color: var(--text-subtle); margin-top: 0.75rem; margin-bottom: 2px;">Email</div>
+                <div style="font-weight: 600; word-break: break-all;" class="user-email-display">alex.chen@workplace.io</div>
+              </div>
+            </div>
+
+            <!-- Right: Settings Tabs & Form -->
+            <div class="profile-settings-tabs">
+              <h3 style="font-size: 1.15rem; margin-bottom: 1.5rem; font-weight: 700;">Account & Preferences</h3>
+
+              <div style="display: flex; flex-direction: column; gap: 1.25rem; margin-bottom: 2rem;">
+                <div class="form-group">
+                  <label class="form-label" for="profile-input-name">Display Name</label>
+                  <input type="text" id="profile-input-name">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="profile-input-email">Email Address</label>
+                  <input type="email" id="profile-input-email">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="profile-input-role">Job Title / College Degree</label>
+                  <input type="text" id="profile-input-role">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="profile-input-workspace">Active Workspace Name</label>
+                  <input type="text" id="profile-input-workspace">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="profile-input-bio">Bio / Productivity Philosophy</label>
+                  <textarea id="profile-input-bio" rows="3"></textarea>
+                </div>
+              </div>
+
+              <h4 style="font-size: 1rem; margin-bottom: 1rem; font-weight: 700;">Interface Settings</h4>
+              <div style="margin-bottom: 2rem;">
+                <div class="setting-toggle-row">
+                  <div>
+                    <div style="font-weight: 600; font-size: 0.9rem;">Dark Mode</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">Sleek obsidian palette with high contrast tokens</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="settings-theme-toggle">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <div class="setting-toggle-row">
+                  <div>
+                    <div style="font-weight: 600; font-size: 0.9rem;">Audio Feedback & Haptics</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">Synthesized audio chimes on milestone completions</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" checked onchange="window.taskFlowApp.soundEnabled = this.checked">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <h4 style="font-size: 1rem; margin-bottom: 1rem; font-weight: 700;">Data Management</h4>
+              <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <button class="btn btn-outline" id="btn-export-data">
+                  <span>📥</span>
+                  <span>Export Workspace JSON Backup</span>
+                </button>
+                <button class="btn btn-ghost" id="btn-reset-data" style="color: var(--danger);">
+                  <span>⚠️</span>
+                  <span>Reset to Default Data</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       MODALS & DIALOGS
+       ==================================================================== -->
+
+  <!-- Task Create / Edit Modal -->
+  <div class="modal-overlay" id="task-modal">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-task-title-heading">Create New Task</h3>
+        <button class="btn-icon btn-sm close-task-modal">✕</button>
+      </div>
+      <form id="task-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="task-input-title">Task Title *</label>
+            <input type="text" id="task-input-title" placeholder="e.g. Implement Drag & Drop" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="task-input-desc">Description</label>
+            <textarea id="task-input-desc" rows="3" placeholder="Provide context, criteria, or notes..."></textarea>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label" for="task-input-category">Category</label>
+              <select id="task-input-category">
+                <option value="Study">Study</option>
+                <option value="Work">Work</option>
+                <option value="Personal">Personal</option>
+                <option value="Team">Team</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="task-input-priority">Priority</label>
+              <select id="task-input-priority">
+                <option value="urgent">Urgent (Red)</option>
+                <option value="high">High (Orange)</option>
+                <option value="medium" selected>Medium (Blue)</option>
+                <option value="low">Low (Slate)</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label" for="task-input-duedate">Due Date</label>
+              <input type="date" id="task-input-duedate">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="task-input-status">Column Status</label>
+              <select id="task-input-status">
+                <option value="todo">To-Do</option>
+                <option value="inprogress">In Progress</option>
+                <option value="inreview">In Review</option>
+                <option value="done">Completed</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="task-input-assignee">Assignee</label>
+            <input type="text" id="task-input-assignee" placeholder="Assignee name...">
+          </div>
+
+          <!-- Subtasks Builder -->
+          <div class="form-group">
+            <div class="form-label">
+              <span>Subtasks & Criteria</span>
+              <button type="button" class="btn btn-sm btn-ghost" id="btn-add-modal-subtask" style="color: var(--primary);">+ Add Subtask</button>
+            </div>
+            <div id="modal-subtasks-container">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline close-task-modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Command Palette Modal (Ctrl+K) -->
+  <div class="modal-overlay" id="command-palette-modal">
+    <div class="modal-window command-palette-window">
+      <div class="palette-input-row">
+        <span style="font-size: 1.25rem;">🔍</span>
+        <input type="text" id="palette-input" class="palette-input" placeholder="Search commands, pages, tasks, notes...">
+        <button class="btn-icon btn-sm" onclick="window.taskFlowApp.closeModal('command-palette-modal')">✕</button>
+      </div>
+      <div class="palette-results-list" id="palette-results">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- File Preview Modal -->
+  <div class="modal-overlay" id="file-preview-modal">
+    <div class="modal-window" style="max-width: 680px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-file-title">File Preview</h3>
+        <button class="btn-icon btn-sm close-file-modal">✕</button>
+      </div>
+      <div class="modal-body" id="modal-file-preview-body">
+        <!-- Rendered dynamically -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline close-file-modal">Close</button>
+        <button type="button" class="btn btn-primary" id="btn-modal-download-file">Download File</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Switcher Persona Modal -->
+  <div class="modal-overlay" id="user-switcher-modal">
+    <div class="modal-window" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Switch Persona Account</h3>
+        <button class="btn-icon btn-sm" onclick="window.taskFlowApp.closeModal('user-switcher-modal')">✕</button>
+      </div>
+      <div class="modal-body" style="gap: 1rem;">
+        <div class="glass-card" style="padding: 1rem; cursor: pointer; display: flex; align-items: center; gap: 1rem;" onclick="window.taskFlowApp.switchUser('user_2')">
+          <div class="avatar" style="background: #10B981; color: white;">EW</div>
+          <div style="flex: 1;">
+            <div style="font-weight: 700;">Emma Watson</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">CS & Web Tech Student</div>
+            <div style="font-size: 0.75rem; color: var(--primary); margin-top: 2px;">Study checklists & assignment schedules</div>
+          </div>
+          <span class="badge badge-success">Student</span>
+        </div>
+
+        <div class="glass-card" style="padding: 1rem; cursor: pointer; display: flex; align-items: center; gap: 1rem;" onclick="window.taskFlowApp.switchUser('user_1')">
+          <div class="avatar" style="background: #2563EB; color: white;">AC</div>
+          <div style="flex: 1;">
+            <div style="font-weight: 700;">Alex Chen</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">Senior Product Manager</div>
+            <div style="font-size: 0.75rem; color: var(--primary); margin-top: 2px;">Sprint velocity & PRD notes</div>
+          </div>
+          <span class="badge badge-primary">Pro</span>
+        </div>
+
+        <div class="glass-card" style="padding: 1rem; cursor: pointer; display: flex; align-items: center; gap: 1rem;" onclick="window.taskFlowApp.switchUser('user_3')">
+          <div class="avatar" style="background: #8B5CF6; color: white;">SC</div>
+          <div style="flex: 1;">
+            <div style="font-weight: 700;">Sarah Connor</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">Engineering Team Lead</div>
+            <div style="font-size: 0.75rem; color: var(--primary); margin-top: 2px;">Team workload & task delegations</div>
+          </div>
+          <span class="badge badge-purple">Team Lead</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invite Team Member Modal -->
+  <div class="modal-overlay" id="invite-member-modal">
+    <div class="modal-window" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Invite New Team Member</h3>
+        <button class="btn-icon btn-sm close-invite-modal">✕</button>
+      </div>
+      <form id="invite-member-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="invite-input-name">Full Name *</label>
+            <input type="text" id="invite-input-name" placeholder="e.g. Priya Patel" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="invite-input-email">Email Address</label>
+            <input type="email" id="invite-input-email" placeholder="priya@example.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="invite-input-role">Role in Workspace</label>
+            <input type="text" id="invite-input-role" placeholder="e.g. Frontend Engineer">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline close-invite-modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Send Invitation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Calendar Day Task Inspector Modal -->
+  <div class="modal-overlay" id="cal-day-modal">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 class="modal-title" id="cal-day-modal-title">Schedule for Date</h3>
+        <button class="btn-icon btn-sm close-day-modal">✕</button>
+      </div>
+      <div class="modal-body" id="cal-day-modal-body">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Script Imports in Proper Dependency Order -->
+  <script src="js/data.js"></script>
+  <script src="js/tasks.js"></script>
+  <script src="js/checklists.js"></script>
+  <script src="js/notes.js"></script>
+  <script src="js/files.js"></script>
+  <script src="js/team.js"></script>
+  <script src="js/calendar.js"></script>
+  <script src="js/analytics.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
